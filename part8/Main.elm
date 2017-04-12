@@ -21,7 +21,6 @@ main =
 
 getQueryString : String -> String
 getQueryString query =
-    -- See https://developer.github.com/v3/search/#example for how to customize!
     "access_token="
         ++ Auth.token
         ++ "&q="
@@ -136,12 +135,9 @@ type Msg
 
 decodeResponse : Value -> Msg
 decodeResponse json =
-    -- TODO use decodeValue to decode the response into a Msg.
-    --
-    -- Hint: look at the definition of Msg and
-    -- the definition of responseDecoder
-    HandleSearchError (Just "TODO decode the response!")
-
+  case decodeValue responseDecoder json of
+    Ok result -> HandleSearchResponse result
+    Err error -> HandleSearchError (Just error)
 
 port githubSearch : String -> Cmd msg
 

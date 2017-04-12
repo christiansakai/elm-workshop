@@ -19,6 +19,7 @@ main =
         }
 
 
+
 searchFeed : String -> Cmd Msg
 searchFeed query =
     let
@@ -29,15 +30,10 @@ searchFeed query =
                 ++ query
                 ++ "+language:elm&sort=stars&order=desc"
 
-        -- HINT: responseDecoder may be useful here.
         request =
-            "TODO replace this String with a Request built using http://package.elm-lang.org/packages/elm-lang/http/latest/Http#get"
+            Http.get url responseDecoder
     in
-        -- TODO replace this Cmd.none with a call to Http.send
-        -- http://package.elm-lang.org/packages/elm-lang/http/latest/Http#send
-        --
-        -- HINT: request and HandleSearchResponse may be useful here.
-        Cmd.none
+        Http.send HandleSearchResponse request
 
 
 responseDecoder : Decoder (List SearchResult)
@@ -117,6 +113,21 @@ type Msg
     | HandleSearchResponse (Result Http.Error (List SearchResult))
 
 
+httpErrorToMessage : Http.Error -> String
+httpErrorToMessage error =
+    case error of
+        Http.NetworkError ->
+            "Is the server running?"
+
+        Http.BadStatus response ->
+            (toString response.status)
+
+        Http.BadPayload message _ ->
+            "Decoding Failed: " ++ message
+
+        _ ->
+            (toString error)
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -129,17 +140,7 @@ update msg model =
                     ( { model | results = results }, Cmd.none )
 
                 Err error ->
-                    -- TODO if decoding failed, store the message in model.errorMessage
-                    --
-                    -- HINT 1: Remember, model.errorMessage is a Maybe String - so it
-                    -- can only be set to either Nothing or (Just "some string here")
-                    --
-                    -- Hint 2: look for "decode" in the documentation for this union type:
-                    -- http://package.elm-lang.org/packages/elm-lang/http/latest/Http#Error
-                    --
-                    -- Hint 3: to check if this is working, break responseDecoder
-                    -- by changing "stargazers_count" to "description"
-                    ( model, Cmd.none )
+                    ( { model | errorMessage = Just (Debug.log "Error" (httpErrorToMessage error)) }, Cmd.none)
 
         SetQuery query ->
             ( { model | query = query }, Cmd.none )
