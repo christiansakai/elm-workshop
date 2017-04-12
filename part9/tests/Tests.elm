@@ -18,11 +18,10 @@ all =
                         """{ "pizza": [] }"""
 
                     isErrorResult result =
-                        -- TODO return True if the given Result is an Err of some sort,
-                        -- and False if it is an Ok of some sort.
-                        --
-                        -- Result docs: http://package.elm-lang.org/packages/elm-lang/core/latest/Result
-                        False
+                      case result of
+                        Ok _  -> False
+                        Err _ -> True
+
                 in
                     json
                         |> decodeString responseDecoder
@@ -30,9 +29,16 @@ all =
                         |> Expect.true "Expected decoding an invalid response to return an Err."
         , test "it successfully decodes a valid response" <|
             \() ->
-                """{ "items": [
-                    /* TODO: put JSON here! */
-                 ] }"""
+                """{ "items": [{
+                        "id": 5,
+                        "full_name": "foo",
+                        "stargazers_count": 42
+                      }, {
+                        "id": 3,
+                        "full_name": "bar",
+                        "stargazers_count": 77
+                      }] 
+                    }"""
                     |> decodeString responseDecoder
                     |> Expect.equal
                         (Ok
@@ -40,16 +46,11 @@ all =
                             , { id = 3, name = "bar", stars = 77 }
                             ]
                         )
-        , test "it decodes one SearchResult for each 'item' in the JSON" <|
-            \() ->
+        , fuzz int "it decodes one SearchResult for each 'item' in the JSON" <|
+            \randomInt ->
                 let
-                    -- TODO convert this to a fuzz test that generates a random
-                    -- list of ids instead of this hardcoded list of three ids.
-                    --
-                    -- fuzz test docs: http://package.elm-lang.org/packages/elm-community/elm-test/latest/Test#fuzz
-                    -- Fuzzer docs: http://package.elm-lang.org/packages/project-fuzzball/test/6.0.0
                     ids =
-                        [ 12, 5, 76 ]
+                        [ randomInt, randomInt, randomInt ]
 
                     jsonFromId id =
                         """{"id": """ ++ toString id ++ """, "full_name": "foo", "stargazers_count": 42}"""
